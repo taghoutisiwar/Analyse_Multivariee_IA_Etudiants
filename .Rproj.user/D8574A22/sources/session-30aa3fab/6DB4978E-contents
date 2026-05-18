@@ -1,0 +1,307 @@
+## Idée générale du projet
+
+### Le problème étudié
+Aujourd’hui, les étudiants utilisent de plus en plus des outils d’intelligence artificielle comme :
+- ChatGPT
+- Gemini
+- Claude
+
+pour :
+- faire des recherches,
+- résoudre des exercices,
+- programmer,
+- rédiger des rapports,
+- comprendre les cours.
+
+Mais cette utilisation soulève plusieurs questions :
+- Est-ce que l’IA améliore vraiment les résultats académiques ?
+- Les étudiants deviennent-ils dépendants à l’IA ?
+- Quels comportements influencent la réussite ?
+- Peut-on identifier différents profils d’étudiants ?
+
+### L’objectif du projet
+Le projet consiste à :
+**analyser les comportements des étudiants face à l’intelligence artificielle** en utilisant des méthodes statistiques multivariées.
+
+### Ce qu’on cherche à découvrir
+Nous voulons comprendre la relation entre :
+- usage IA,
+- temps d’étude,
+- sommeil,
+- présence,
+- réseaux sociaux,
+- performances académiques.
+
+## Infographie : Impact de la dépendance à l'IA
+*(Veuillez insérer l'image téléchargée ici)*
+![Infographie de l'étude](infographie.png)
+
+## Méthodes utilisées
+
+### 1. ACP — Analyse en Composantes Principales
+L’ACP sert à :
+- réduire le nombre de variables,
+- visualiser les relations entre les étudiants,
+- identifier les facteurs principaux.
+
+Par exemple :
+- **Axe 1 :** Étudiants performants ↔ étudiants dépendants à l’IA
+- **Axe 2 :** Étudiants réguliers ↔ étudiants distraits par réseaux sociaux
+
+### 2. K-means Clustering
+Le clustering sert à :
+- créer des groupes d’étudiants similaires,
+- identifier des profils.
+
+**Exemple des profils obtenus :**
+- **Cluster 1 :** Étudiants performants avec utilisation équilibrée de l’IA.
+- **Cluster 2 :** Étudiants fortement dépendants à l’IA.
+- **Cluster 3 :** Étudiants autonomes et disciplinés.
+- **Cluster 4 :** Étudiants à faible performance et forte distraction numérique.
+
+### Dataset utilisé
+Dataset Kaggle contenant :
+- 8000 étudiants,
+- 26 variables académiques et comportementales.
+
+Source : *Academic Outcomes & AI Dependency Analysis Dataset*
+
+### Résultat attendu
+Le projet permettra :
+✅ d’identifier les facteurs influençant la réussite académique
+✅ de comprendre l’impact de l’IA sur les étudiants
+✅ de segmenter les étudiants selon leurs comportements
+✅ d’aider à la prise de décision pédagogique
+
+---
+
+## Code et Analyse
+
+### 1. Installation et Chargement des Packages
+
+```{r packages, results='hide'}
+# Décommenter la ligne suivante pour installer les packages si nécessaire
+# install.packages(c("tidyverse", "FactoMineR", "factoextra", "cluster", "corrplot", "NbClust", "pheatmap"))
+
+library(tidyverse)
+library(FactoMineR)
+library(factoextra)
+library(cluster)
+library(corrplot)
+library(NbClust)
+library(pheatmap)
+```
+
+### 2. Importation et Exploration des Données
+
+```{r import_data}
+data <- read.csv("ai_impact_student_performance_dataset.csv")
+
+# Aperçu des données
+head(data)
+str(data)
+summary(data)
+dim(data)
+```
+
+### 3. Valeurs Manquantes
+
+```{r missing_values}
+colSums(is.na(data))
+```
+
+### 4. Sélection des Variables Numériques et Normalisation
+
+```{r numeric_variables}
+data_num <- data %>%
+  select(
+    ai_dependency_score,
+    ai_usage_time_minutes,
+    ai_ethics_score,
+    last_exam_score,
+    assignment_scores_avg,
+    attendance_percentage,
+    concept_understanding_score,
+    study_consistency_index,
+    improvement_rate,
+    sleep_hours,
+    social_media_hours,
+    class_participation_score,
+    final_score
+  )
+
+# Normalisation des données
+data_scaled <- scale(data_num)
+```
+
+### 5. Analyse Descriptive
+
+#### Distribution de la Dépendance à l'IA
+
+```{r hist_dependency}
+ggplot(data, aes(x = ai_dependency_score)) +
+  geom_histogram(bins = 20, fill = "steelblue", color = "black") +
+  labs(
+    title = "Distribution du score de dépendance à l’IA",
+    x = "Score dépendance IA",
+    y = "Fréquence"
+  ) +
+  theme_minimal()
+```
+
+#### Temps d’utilisation quotidien de l’IA
+
+```{r hist_usage}
+ggplot(data, aes(x = ai_usage_time_minutes)) +
+  geom_histogram(bins = 30, fill = "darkgreen", color = "black") +
+  labs(
+    title = "Temps d’utilisation quotidien de l’IA",
+    x = "Minutes",
+    y = "Nombre d’étudiants"
+  ) +
+  theme_minimal()
+```
+
+#### Relations avec le Score Final
+
+```{r relations_final_score}
+# IA vs Score Final
+p1 <- ggplot(data, aes(x = ai_dependency_score, y = final_score)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Dépendance IA vs Score Final", x = "Dépendance IA", y = "Score Final") +
+  theme_minimal()
+
+# Sleep vs Score Final
+p2 <- ggplot(data, aes(x = sleep_hours, y = final_score)) +
+  geom_point(alpha = 0.5, color = "purple") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Sommeil vs Score Final", x = "Heures de sommeil", y = "Score Final") +
+  theme_minimal()
+
+# Attendance vs Score Final
+p3 <- ggplot(data, aes(x = attendance_percentage, y = final_score)) +
+  geom_point(alpha = 0.5, color = "darkorange") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Présence vs Score Final", x = "Présence %", y = "Score Final") +
+  theme_minimal()
+
+# Affichage des graphiques (nécessite le package gridExtra pour l'affichage côte à côte, ou on les affiche un par un)
+p1
+p2
+p3
+```
+
+### 6. Matrice de Corrélation
+
+```{r correlation}
+cor_matrix <- cor(data_num, use = "complete.obs")
+
+corrplot(
+  cor_matrix,
+  method = "circle",
+  type = "upper",
+  tl.col = "black",
+  tl.srt = 45,
+  addCoef.col = "black",
+  number.cex = 0.6,
+  col = colorRampPalette(c("red", "white", "blue"))(200)
+)
+```
+
+### 7. Analyse en Composantes Principales (ACP)
+
+```{r pca}
+res.pca <- PCA(data_scaled, graph = FALSE)
+
+# Valeurs propres
+res.pca$eig
+
+# Scree plot
+fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 50))
+
+# Cercle des corrélations
+fviz_pca_var(
+  res.pca,
+  col.var = "contrib",
+  gradient.cols = c("blue", "yellow", "red"),
+  repel = TRUE
+)
+
+# Projection des individus
+# fviz_pca_ind(res.pca, geom.ind = "point", col.ind = "steelblue", repel = TRUE)
+
+# Biplot ACP
+# fviz_pca_biplot(res.pca, geom.ind = "point", pointshape = 21, pointsize = 2, fill.ind = "lightblue", col.ind = "black", col.var = "red", repel = TRUE)
+```
+*(Remarque : L'affichage des individus et du biplot pour 8000 individus peut être illisible et lent. Ils ont été commentés dans ce rapport).*
+
+### 8. Clustering K-Means
+
+#### Détermination du Nombre Optimal de Clusters
+
+```{r nb_clusters}
+# fviz_nbclust(data_scaled, kmeans, method = "wss") + theme_minimal()
+```
+*(Remarque : Calculer le nombre optimal sur 8000 observations peut prendre du temps, on fixe le nombre de clusters à 4 selon l'étude).*
+
+#### Algorithme K-Means avec K=4
+
+```{r kmeans}
+set.seed(123)
+km_res <- kmeans(data_scaled, centers = 4, nstart = 25)
+
+# Visualisation des clusters (2 premières dimensions de l'ACP)
+fviz_cluster(
+  km_res,
+  data = data_scaled,
+  ellipse.type = "norm",
+  palette = "jco",
+  geom = "point",
+  ggtheme = theme_minimal()
+)
+```
+
+### 9. Analyse des Profils (Clusters)
+
+```{r cluster_analysis}
+# Ajout de l'assignation du cluster au dataset
+data$cluster <- as.factor(km_res$cluster)
+
+# Moyennes par cluster
+cluster_means <- aggregate(data_num, by = list(cluster = km_res$cluster), mean)
+print(cluster_means)
+
+# Heatmap des moyennes
+pheatmap(
+  as.matrix(cluster_means[,-1]),
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  scale = "column",
+  main = "Profil des Clusters (Standardisé par variable)"
+)
+```
+
+#### Boxplots par Cluster
+
+```{r boxplots_clusters}
+# Score Final par Cluster
+ggplot(data, aes(x = cluster, y = final_score, fill = cluster)) +
+  geom_boxplot() +
+  labs(title = "Score final par cluster", x = "Cluster", y = "Score final") +
+  theme_minimal()
+
+# Dépendance IA par Cluster
+ggplot(data, aes(x = cluster, y = ai_dependency_score, fill = cluster)) +
+  geom_boxplot() +
+  labs(title = "Dépendance IA par cluster", x = "Cluster", y = "Score dépendance IA") +
+  theme_minimal()
+```
+
+### 10. Export des Résultats
+
+```{r export}
+write.csv(cluster_means, "cluster_means.csv", row.names = FALSE)
+```
+
+**Fin de l'analyse.**
